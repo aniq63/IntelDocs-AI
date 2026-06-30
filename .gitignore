@@ -216,3 +216,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+
+docs.txt
+demo.py
+database/schema_sql.txt
+logs
