@@ -127,7 +127,7 @@ class Document(Base):
         index=True
     )
 
-    title = Column(Text, nullable=False)
+    doc_length = Column(BigInteger, nullable=False)
 
     source = Column(Text, nullable=False)
 

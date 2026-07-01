@@ -21,3 +21,4 @@ pydantic[email]
 requests
 pyyaml
 pgvector
+langchain-classic
