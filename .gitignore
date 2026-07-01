@@ -222,3 +222,6 @@ docs.txt
 demo.py
 database/schema_sql.txt
 logs
+
+
+.cache_embeddings

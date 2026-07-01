@@ -56,3 +56,16 @@ class TeamLogin(BaseModel):
     company_name: str
     team_name: str
     password: str
+
+
+class DocumentOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+ 
+    id: int
+    company_id: int
+    team_id: Optional[int] = None
+    doc_length: int
+    source: str
+    visibility: str
+    status: str
+    uploaded_at: datetime
