@@ -18,7 +18,7 @@ class RAGConfig:
     # -------------------------------------------------------------------------
     # Chunking Strategy
     # -------------------------------------------------------------------------
-    semantic_chunking: bool = True
+    semantic_chunking: bool = False
 
     # -------------------------------------------------------------------------
     # Recursive Chunking (Fallback)
@@ -41,6 +41,24 @@ class RAGConfig:
     # Embedding Dimensions
     # -------------------------------------------------------------------------
     embedding_dimension: int = 384
+
+    # -------------------------------------------------------------------------
+    # Contextual Chunking (Groq LLM context enrichment)
+    # -------------------------------------------------------------------------
+
+    # Master switch - off by default. When True, every chunk gets an
+    # LLM-generated context note prepended before embedding.
+    contextual_chunking: bool = True
+
+    # Groq model used to generate context notes
+    contextual_model: str = "llama-3.1-8b-instant"
+
+    # Max characters of the source document sent as reference context
+    # to the LLM (keeps prompts small/cheap even for very long files)
+    contextual_max_doc_chars: int = 20000
+
+    # Max concurrent Groq calls when contextualizing chunks
+    contextual_max_workers: int = 5
 
 
 # =============================================================================
