@@ -177,3 +177,39 @@ async def get_current_team_from_query(
         )
 
     return team
+
+
+# =============================================================================
+# VERFIED TEAM AUTHENTICATION
+# =============================================================================
+
+from fastapi import Depends, HTTPException
+
+from database import models
+from utils.authentication import get_current_company, get_current_team
+
+
+async def get_verified_team(
+    current_team: models.Team = Depends(get_current_team),
+    current_company: models.Company = Depends(get_current_company),
+) -> models.Team:
+    """
+    Use this instead of get_current_team on any route that should
+    require BOTH:
+      1. A valid team session token, AND
+      2. A valid company session token for the company that team
+         belongs to.
+
+    This closes the gap where a team session token alone (without the
+    owning company also being logged in) could still call team
+    endpoints, and where a team token could theoretically be paired
+    with an unrelated company's session.
+    """
+
+    if current_team.company_id != current_company.id:
+        raise HTTPException(
+            status_code=403,
+            detail="This team does not belong to the authenticated company.",
+        )
+
+    return current_team

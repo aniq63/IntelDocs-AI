@@ -10,7 +10,8 @@ from utils.authentication import (
     verify_password,
     generate_session_token,
     get_current_company,
-    get_current_team
+    get_current_team,
+    get_verified_team,
 )
 
 warnings.filterwarnings("ignore")
@@ -31,31 +32,22 @@ router = APIRouter(
 )
 async def team_login(
     team: schemas.TeamLogin,
+    current_company: models.Company = Depends(get_current_company),
     db: AsyncSession = Depends(get_db)
 ):
+    """
+    A team can only be logged into while its company session is
+    active. The company is taken from the authenticated company
+    session (not from the request body), so there's no way to log
+    into a team belonging to a company you aren't authenticated as.
+    """
 
-    company_name = team.company_name.strip().lower()
     team_name = team.team_name.strip().lower()
 
-    # Find company
-    company_result = await db.execute(
-        select(models.Company).where(
-            models.Company.name == company_name
-        )
-    )
-
-    company = company_result.scalar_one_or_none()
-
-    if not company:
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid company name."
-        )
-
-    # Find team within this company
+    # Find team within the *currently authenticated* company only
     team_result = await db.execute(
         select(models.Team).where(
-            (models.Team.company_id == company.id) &
+            (models.Team.company_id == current_company.id) &
             (models.Team.name == team_name)
         )
     )
@@ -97,11 +89,12 @@ async def team_login(
 
 @router.post("/team/logout")
 async def team_logout(
-    current_team: models.Team = Depends(get_current_team),
+    current_team: models.Team = Depends(get_verified_team),
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Logout the currently authenticated team.
+    Logout the currently authenticated team. Requires both the team
+    session and its owning company's session to be active.
     """
 
     current_team.session_token = None
@@ -122,10 +115,12 @@ async def team_logout(
     response_model=schemas.TeamResponse
 )
 async def team_profile(
-    current_team: models.Team = Depends(get_current_team)
+    current_team: models.Team = Depends(get_verified_team)
 ):
     """
-    Return the profile of the currently authenticated team.
+    Return the profile of the currently authenticated team. Requires
+    both the team session and its owning company's session to be
+    active.
     """
 
     return current_team

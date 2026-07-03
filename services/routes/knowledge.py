@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.connection import get_db
 from database import models, schemas
-from utils.authentication import get_current_company, get_current_team
+from utils.authentication import get_current_company, get_verified_team
 
 from services.pipeline import knowledge_service_pipeline as knowledge_service
 
@@ -107,6 +107,10 @@ async def update_company_document_by_name(
 
 # ----------------------------------------
 # Team Knowledge
+#
+# All team routes below use get_verified_team, which requires BOTH:
+#   - a valid team session token, AND
+#   - a valid company session token for that team's owning company
 # ----------------------------------------
 
 @router.post(
@@ -116,7 +120,7 @@ async def update_company_document_by_name(
 )
 async def upload_team_document(
     file: UploadFile = File(...),
-    current_team: models.Team = Depends(get_current_team),
+    current_team: models.Team = Depends(get_verified_team),
     db: AsyncSession = Depends(get_db),
 ):
     return await knowledge_service.process_and_store_document(
@@ -130,7 +134,7 @@ async def upload_team_document(
 
 @router.get("/team/knowledge", response_model=List[schemas.DocumentOut])
 async def list_team_documents(
-    current_team: models.Team = Depends(get_current_team),
+    current_team: models.Team = Depends(get_verified_team),
     db: AsyncSession = Depends(get_db),
 ):
     return await knowledge_service.list_documents(
@@ -146,7 +150,7 @@ async def list_team_documents(
 )
 async def get_team_document_by_name(
     name: str,
-    current_team: models.Team = Depends(get_current_team),
+    current_team: models.Team = Depends(get_verified_team),
     db: AsyncSession = Depends(get_db),
 ):
     return await knowledge_service.get_owned_document_by_source(
@@ -160,7 +164,7 @@ async def get_team_document_by_name(
 @router.delete("/team/knowledge/by-name", status_code=204)
 async def delete_team_document_by_name(
     name: str,
-    current_team: models.Team = Depends(get_current_team),
+    current_team: models.Team = Depends(get_verified_team),
     db: AsyncSession = Depends(get_db),
 ):
     document = await knowledge_service.get_owned_document_by_source(
@@ -182,7 +186,7 @@ async def delete_team_document_by_name(
 async def update_team_document_by_name(
     name: str,
     file: UploadFile = File(...),
-    current_team: models.Team = Depends(get_current_team),
+    current_team: models.Team = Depends(get_verified_team),
     db: AsyncSession = Depends(get_db),
 ):
     document = await knowledge_service.get_owned_document_by_source(
