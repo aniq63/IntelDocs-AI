@@ -220,6 +220,7 @@ __marimo__/
 
 docs.txt
 demo.py
+debug_retrival.py
 database/schema_sql.txt
 logs
 

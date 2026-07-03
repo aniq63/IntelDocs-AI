@@ -9,7 +9,7 @@ from langchain_core.documents import Document
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_groq import ChatGroq
 
-from prompts.contextual_chunking_prompts import (
+from services.prompts.contextual_chunking_prompts import (
     CONTEXTUAL_CHUNK_SYSTEM_PROMPT,
     CONTEXTUAL_CHUNK_USER_PROMPT,
 )
@@ -111,10 +111,59 @@ class ChunkEmbedder:
 
         return splitter.split_documents(documents)
 
+    def _build_full_text_with_page_map(
+        self,
+        documents: list[Document]
+    ):
+        """
+        Concatenates all page-level Documents for one uploaded file
+        into a single continuous text, and records which character
+        offset range came from which page. This lets the semantic
+        chunker consider the whole document at once - so a section
+        that continues across a page break isn't artificially cut -
+        while still letting us recover an approximate page_number per
+        resulting chunk afterwards.
+        """
+
+        parts = []
+        page_map = []  # (start_offset, end_offset, page_number)
+        cursor = 0
+
+        source = documents[0].metadata.get("source") if documents else None
+
+        for doc in documents:
+            text = doc.page_content
+            start = cursor
+
+            parts.append(text)
+            cursor += len(text)
+
+            page_map.append((start, cursor, doc.metadata.get("page")))
+
+            parts.append("\n\n")
+            cursor += 2
+
+        return "".join(parts), page_map, source
+
+    @staticmethod
+    def _page_number_for_offset(page_map, offset):
+        if offset is None:
+            return None
+
+        for start, end, page_number in page_map:
+            if start <= offset < end:
+                return page_number
+
+        return page_map[-1][2] if page_map else None
+
     def _semantic_chunking(
         self,
         documents: list[Document]
     ) -> list[Document]:
+
+        full_text, page_map, source = self._build_full_text_with_page_map(
+            documents
+        )
 
         splitter = SemanticChunker(
             embeddings=self.embeddings,
@@ -126,18 +175,116 @@ class ChunkEmbedder:
             )
         )
 
+        raw_chunks = splitter.create_documents([full_text])
+
         chunked_documents = []
+        search_cursor = 0
 
-        for doc in documents:
+        for raw_chunk in raw_chunks:
+            chunk_text = raw_chunk.page_content
 
-            chunks = splitter.create_documents(
-                [doc.page_content],
-                metadatas=[doc.metadata]
+            # SemanticChunker can normalize whitespace slightly, so an
+            # exact substring match isn't guaranteed. Try from the
+            # last known position first (cheap, usually works since
+            # chunks are sequential), then fall back to a global
+            # search before giving up on page attribution.
+            offset = full_text.find(chunk_text, search_cursor)
+
+            if offset == -1:
+                offset = full_text.find(chunk_text)
+
+            page_number = self._page_number_for_offset(page_map, offset)
+
+            if offset != -1:
+                search_cursor = offset + len(chunk_text)
+
+            chunked_documents.append(
+                Document(
+                    page_content=chunk_text,
+                    metadata={"source": source, "page": page_number},
+                )
             )
 
-            chunked_documents.extend(chunks)
-
         return chunked_documents
+
+    def _split_oversized_chunks(
+        self,
+        chunks: list[Document]
+    ) -> list[Document]:
+        """
+        Instead of discarding an entire document's semantic chunking
+        because ONE chunk came out oversized, only that offending
+        chunk gets recursively split further. Every well-sized
+        semantic chunk is left untouched.
+        """
+
+        splitter = RecursiveCharacterTextSplitter(
+            chunk_size=self.config.fallback_chunk_size,
+            chunk_overlap=self.config.fallback_chunk_overlap,
+        )
+
+        final_chunks = []
+
+        for chunk in chunks:
+            if len(chunk.page_content) <= self.config.max_chunk_size:
+                final_chunks.append(chunk)
+                continue
+
+            logging.warning(
+                f"Semantic chunk of {len(chunk.page_content)} chars "
+                f"exceeded max_chunk_size ({self.config.max_chunk_size}); "
+                "splitting it further with recursive chunking."
+            )
+
+            final_chunks.extend(splitter.split_documents([chunk]))
+
+        return final_chunks
+
+    def _split_oversized_chunks(
+        self,
+        chunks: list[Document]
+    ) -> list[Document]:
+        """
+        Semantic chunking can occasionally produce one oversized chunk
+        (e.g. a long, semantically uniform section with no strong
+        breakpoint). Previously, a single oversized chunk anywhere in
+        the document caused ALL chunks to be discarded and replaced
+        with blunt fixed-size recursive chunking - destroying good
+        semantic boundaries everywhere else in the document to fix a
+        problem in one spot.
+
+        Instead: only the oversized chunk(s) get recursively
+        re-split. Every chunk that's already within max_chunk_size
+        keeps its semantic boundary untouched.
+        """
+
+        fallback_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=self.config.fallback_chunk_size,
+            chunk_overlap=self.config.fallback_chunk_overlap,
+        )
+
+        final_chunks: list[Document] = []
+        oversized_count = 0
+
+        for chunk in chunks:
+
+            if len(chunk.page_content) > self.config.max_chunk_size:
+                oversized_count += 1
+                final_chunks.extend(
+                    fallback_splitter.split_documents([chunk])
+                )
+            else:
+                final_chunks.append(chunk)
+
+        if oversized_count:
+            logging.warning(
+                f"{oversized_count} semantic chunk(s) exceeded "
+                f"max_chunk_size ({self.config.max_chunk_size} chars) "
+                "and were recursively split further; all other "
+                "chunks kept their semantic boundaries intact."
+            )
+
+        return final_chunks
 
     # ----------------------------------------
     # Contextual chunking (enrichment step)
@@ -254,19 +401,7 @@ class ChunkEmbedder:
 
                 chunks = self._semantic_chunking(documents)
 
-                oversized = any(
-                    len(chunk.page_content)
-                    > self.config.max_chunk_size
-                    for chunk in chunks
-                )
-
-                if oversized:
-
-                    logging.warning(
-                        "Large chunks detected. Falling back to Recursive Chunking."
-                    )
-
-                    chunks = self._recursive_chunking(documents)
+                chunks = self._split_oversized_chunks(chunks)
 
             if self.contextual_chunking_enabled:
                 chunks = self._apply_contextual_chunking(documents, chunks)

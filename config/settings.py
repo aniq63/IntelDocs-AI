@@ -18,24 +18,29 @@ class RAGConfig:
     # -------------------------------------------------------------------------
     # Chunking Strategy
     # -------------------------------------------------------------------------
-    semantic_chunking: bool = False
+    semantic_chunking: bool = True
 
     # -------------------------------------------------------------------------
     # Recursive Chunking (Fallback)
     # -------------------------------------------------------------------------
-    fallback_chunk_size: int = 1000
+    fallback_chunk_size: int = 400
 
-    fallback_chunk_overlap: int = 200
+    fallback_chunk_overlap: int = 80
 
     # Maximum allowed chunk size before falling back
-    max_chunk_size: int = 2000
+    max_chunk_size: int = 800
 
     # -------------------------------------------------------------------------
     # Semantic Chunking
     # -------------------------------------------------------------------------
     breakpoint_threshold_type: str = "percentile"
 
-    breakpoint_threshold_amount: int = 95
+    # Lower = more (smaller, more topically-focused) chunks. 95 was
+    # only splitting on extreme semantic jumps, so unrelated resume
+    # sections (skills, certifications, experience) were getting
+    # merged into single large chunks and diluting each other's
+    # embeddings. 80 splits more eagerly.
+    breakpoint_threshold_amount: int = 80
 
     # -------------------------------------------------------------------------
     # Embedding Dimensions
@@ -48,7 +53,7 @@ class RAGConfig:
 
     # Master switch - off by default. When True, every chunk gets an
     # LLM-generated context note prepended before embedding.
-    contextual_chunking: bool = True
+    contextual_chunking: bool = False
 
     # Groq model used to generate context notes
     contextual_model: str = "llama-3.1-8b-instant"
