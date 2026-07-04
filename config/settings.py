@@ -12,6 +12,7 @@ class RAGConfig:
     # Embedding Model
     # -------------------------------------------------------------------------
     embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
+    
 
     embedding_cache_dir: str = "./.cache_embeddings"
 
@@ -64,6 +65,9 @@ class RAGConfig:
 
     # Max concurrent Groq calls when contextualizing chunks
     contextual_max_workers: int = 5
+
+    ## LLM Model
+    llm_model = "llama-3.1-8b-instant"
 
 
 # =============================================================================

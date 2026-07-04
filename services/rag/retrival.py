@@ -178,7 +178,7 @@ class RetrievalService:
         company_id: int,
         team_id: Optional[int],
         top_k: int = 5,
-        min_similarity: float = 0.30,
+        min_similarity: float = 0.20,
     ) -> List[RetrievedChunk]:
         """
         Convert the question into an embedding and retrieve the most
