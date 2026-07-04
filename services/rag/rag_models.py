@@ -52,12 +52,8 @@ def embeddings_model():
 def load_llm_models():
     """Load and return different llm models of GROQ using langchain"""
 
-    grading_llm = ChatGroq(model=settings.rag.grading_model, temperature=0, api_key=api_key)
+    llm = ChatGroq(model=settings.rag.llm_model, temperature=0, api_key=api_key)
 
-    rewrite_llm = ChatGroq(model=settings.rag.grading_model, temperature=0.3, api_key=api_key)
-
-    generation_llm = ChatGroq(model=settings.rag.generation_model, temperature=0, api_key=api_key)
-
-    return grading_llm, rewrite_llm , generation_llm
+    return llm
 
 
