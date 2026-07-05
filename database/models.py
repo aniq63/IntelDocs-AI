@@ -56,6 +56,18 @@ class Company(Base):
         cascade="all, delete-orphan"
     )
 
+    chat_sessions = relationship(
+        "ChatSession",
+        back_populates="company",
+        cascade="all, delete-orphan"
+    )
+
+    chat_messages = relationship(
+        "ChatMessage",
+        back_populates="company",
+        cascade="all, delete-orphan"
+    )
+
 
 # =============================================================================
 # TEAM
@@ -99,6 +111,18 @@ class Team(Base):
 
     chunks = relationship(
         "DocumentChunk",
+        back_populates="team",
+        cascade="all, delete-orphan"
+    )
+
+    chat_sessions = relationship(
+        "ChatSession",
+        back_populates="team",
+        cascade="all, delete-orphan"
+    )
+
+    chat_messages = relationship(
+        "ChatMessage",
         back_populates="team",
         cascade="all, delete-orphan"
     )
@@ -241,4 +265,114 @@ class DocumentChunk(Base):
     document = relationship(
         "Document",
         back_populates="chunks"
+    )
+
+
+# =============================================================================
+# CHAT SESSION
+# =============================================================================
+
+class ChatSession(Base):
+    __tablename__ = "chat_sessions"
+
+    id = Column(BigInteger, primary_key=True, index=True)
+
+    company_id = Column(
+        BigInteger,
+        ForeignKey("companies.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+
+    team_id = Column(
+        BigInteger,
+        ForeignKey("teams.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True
+    )
+
+    visibility = Column(Text, nullable=False)
+
+    title = Column(Text)
+
+    created_at = Column(
+        TIMESTAMP(timezone=True),
+        server_default=func.now()
+    )
+
+    updated_at = Column(
+        TIMESTAMP(timezone=True),
+        server_default=func.now()
+    )
+
+    company = relationship(
+        "Company",
+        back_populates="chat_sessions"
+    )
+
+    team = relationship(
+        "Team",
+        back_populates="chat_sessions"
+    )
+
+    messages = relationship(
+        "ChatMessage",
+        back_populates="session",
+        cascade="all, delete-orphan",
+        order_by="ChatMessage.created_at"
+    )
+
+
+# =============================================================================
+# CHAT MESSAGE
+# =============================================================================
+
+class ChatMessage(Base):
+    __tablename__ = "chat_messages"
+
+    id = Column(BigInteger, primary_key=True, index=True)
+
+    session_id = Column(
+        BigInteger,
+        ForeignKey("chat_sessions.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+
+    company_id = Column(
+        BigInteger,
+        ForeignKey("companies.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+
+    team_id = Column(
+        BigInteger,
+        ForeignKey("teams.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True
+    )
+
+    question = Column(Text, nullable=False)
+
+    answer = Column(Text, nullable=False)
+
+    created_at = Column(
+        TIMESTAMP(timezone=True),
+        server_default=func.now()
+    )
+
+    session = relationship(
+        "ChatSession",
+        back_populates="messages"
+    )
+
+    company = relationship(
+        "Company",
+        back_populates="chat_messages"
+    )
+
+    team = relationship(
+        "Team",
+        back_populates="chat_messages"
     )

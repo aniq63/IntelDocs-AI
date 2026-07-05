@@ -69,3 +69,59 @@ class DocumentOut(BaseModel):
     visibility: str
     status: str
     uploaded_at: datetime
+
+#------------------------------------
+# CHAT 
+# ----------------------------------
+
+
+class ChatAskRequest(BaseModel):
+    question: str
+    # Omit to start a new session; pass an existing one to continue it.
+    session_id: Optional[int] = None
+
+
+class ChatAskResponse(BaseModel):
+    session_id: int
+    message_id: int
+    question: str
+    answer: str
+
+
+class ChatSessionOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    title: Optional[str] = None
+    visibility: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class ChatMessageOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    question: str
+    answer: str
+    created_at: datetime
+
+
+
+
+class CompanyOverviewOut(BaseModel):
+    total_documents: int
+    total_teams: int
+
+
+class TeamOverviewOut(BaseModel):
+    total_documents: int
+
+
+class TeamSummaryOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    description: Optional[str] = None
+    created_at: datetime

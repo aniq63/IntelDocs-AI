@@ -69,6 +69,9 @@ class RAGConfig:
     ## LLM Model
     llm_model = "llama-3.1-8b-instant"
 
+    # CHAT 
+    TITLE_MAX_LENGTH = 80
+
 
 # =============================================================================
 # APPLICATION SETTINGS
