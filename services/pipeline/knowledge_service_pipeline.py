@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from database import models
 from services.rag.docs_loader import DocumentLoader
 from services.rag.chunks_embed import ChunkEmbedder
-from services.rag.rag_models import embeddings_model
+from services.rag.rag_models import get_embeddings_model
 from utils.logger import logging
 from utils.exception import MyException
 
@@ -56,28 +56,9 @@ def _validate_file(file: UploadFile) -> None:
 
 
 # ----------------------------------------
-# Embedding model - loaded once, reused across requests
+# Embedding model - loaded once at startup, reused across requests
+# (singleton lives in rag_models.get_embeddings_model)
 # ----------------------------------------
-
-_embedding_model = None
-
-
-def get_embedding_model():
-    """
-    Lazily-initialized singleton so the (potentially large) HuggingFace
-    model is only loaded into memory once per process instead of once
-    per upload.
-
-    Note: if you'd rather load it eagerly, call this once from a FastAPI
-    startup event / lifespan handler instead of relying on lazy init.
-    """
-    global _embedding_model
-
-    if _embedding_model is None:
-        logging.info("Loading embedding model (first use in this process)...")
-        _embedding_model = embeddings_model()
-
-    return _embedding_model
 
 
 # ----------------------------------------
@@ -153,7 +134,7 @@ async def process_and_store_document(
         logging.info("Start document chunking and embeddings")
 
         chunk_embedder = ChunkEmbedder(
-            embeddings=get_embedding_model(),
+            embeddings=get_embeddings_model(),
             config=settings.rag,
         )
 

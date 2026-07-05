@@ -22,8 +22,15 @@ if not api_key:
 
 
 
+# ---------------------------------------------------------------------------
+# Process-wide embedding model singleton
+# ---------------------------------------------------------------------------
+
+_embeddings_instance = None
+
+
 def embeddings_model():
-    """Load and return a cached embedding model."""
+    """Build and return a fresh cached embedding model (internal helper)."""
     logging.info("Loading embedding model...")
 
     # Underlying Hugging Face embedding model
@@ -40,12 +47,41 @@ def embeddings_model():
     # Wrap the model with a cache
     embeddings = CacheBackedEmbeddings.from_bytes_store(
         underlying_embeddings=underlying_embeddings,
-        document_embedding_cache=cache_store,  # Fixed argument name here
+        document_embedding_cache=cache_store,
         namespace=settings.rag.embedding_model,
     )
 
     logging.info("Embedding model loaded successfully.")
     return embeddings
+
+
+def get_embeddings_model():
+    """
+    Return the process-wide embedding model singleton.
+
+    Call ``warm_up_embeddings_model()`` once at application startup
+    (e.g. inside the FastAPI lifespan handler) so that the first real
+    request never blocks on model loading.  If that hasn't happened yet
+    this function will still work — it just loads the model on first call.
+    """
+    global _embeddings_instance
+    if _embeddings_instance is None:
+        _embeddings_instance = embeddings_model()
+    return _embeddings_instance
+
+
+def warm_up_embeddings_model():
+    """
+    Eagerly load the embedding model at startup.
+
+    Invoke this from the FastAPI ``lifespan`` handler so the (potentially
+    large) HuggingFace model is resident in memory before the first
+    request arrives — eliminating the cold-start delay on the first
+    document upload or the first chat query.
+    """
+    logging.info("[startup] Warming up embedding model...")
+    get_embeddings_model()
+    logging.info("[startup] Embedding model is ready.")
 
 
 

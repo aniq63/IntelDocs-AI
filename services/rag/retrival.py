@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from utils.logger import logging
 from utils.exception import MyException
 
-from services.rag.rag_models import embeddings_model
+from services.rag.rag_models import get_embeddings_model
 
 
 @dataclass
@@ -47,21 +47,11 @@ class RetrievalService:
     cosine similarity, scoped to a company (and optionally a team).
     """
 
-    # Cached across instances so the embedding model is loaded once
-    # per process rather than once per RetrievalService() call.
-    _embedding_model = None
-
     def __init__(self, db: AsyncSession):
         self.db = db
-        self.embedding_model = self._get_embedding_model()
-
-    @classmethod
-    def _get_embedding_model(cls):
-        if cls._embedding_model is None:
-            logging.info("Loading embedding model for retrieval (first use).")
-            cls._embedding_model = embeddings_model()
-
-        return cls._embedding_model
+        # Re-use the process-wide singleton from rag_models so the model
+        # is shared with the document ingestion pipeline and loaded only once.
+        self.embedding_model = get_embeddings_model()
 
     async def search_pgvector(
         self,
