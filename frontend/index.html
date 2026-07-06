@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>IntelDocs AI — Ask your company's knowledge, not a search bar</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<!-- ============ NAV ============ -->
+<header class="nav">
+  <div class="container nav-inner">
+    <a href="#" class="brand"><span class="brand-mark"></span> IntelDocs AI</a>
+    <nav class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#how-it-works">How it works</a>
+      <a href="#proof">Why teams use it</a>
+    </nav>
+    <div class="nav-actions">
+      <button class="btn btn-ghost-invert btn-sm" id="openLogin">Log in</button>
+      <button class="btn btn-primary btn-sm" id="openSignup">Get started</button>
+    </div>
+    <button class="nav-toggle" id="navToggle" aria-label="Menu">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M2 5h16M2 10h16M2 15h16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- ============ HERO ============ -->
+<section class="hero">
+  <div class="container hero-grid">
+    <div class="hero-copy">
+      <span class="eyebrow">// Company &amp; team knowledge base</span>
+      <h1>Your documents, <span class="accent">turned into answers.</span></h1>
+      <p>IntelDocs AI gives every company a private, searchable brain: upload your documents, organize teams around them, and ask questions in plain language instead of digging through folders.</p>
+      <div class="hero-actions">
+        <button class="btn btn-primary" id="heroSignup">Create your company workspace</button>
+        <button class="btn btn-ghost-invert" id="heroLogin">I already have an account</button>
+      </div>
+      <div class="hero-meta">
+        <div><strong>2</strong><span>Workspace levels — company &amp; team</span></div>
+        <div><strong>&lt;1s</strong><span>Typical retrieval time per query</span></div>
+        <div><strong>100%</strong><span>Answers grounded in your own docs</span></div>
+      </div>
+    </div>
+    <div class="chat-mock" aria-hidden="true">
+      <div class="chat-mock-head">
+        <span class="chat-mock-dot"></span><span class="chat-mock-dot"></span><span class="chat-mock-dot"></span>
+        <span class="chat-mock-title">company / general</span>
+      </div>
+      <div class="chat-mock-body">
+        <div class="bubble bubble-user">What's our current refund policy for enterprise plans?</div>
+        <div class="bubble bubble-ai">
+          Enterprise plans allow refunds within 30 days of the invoice date, prorated for unused seats.
+          <span class="cite">refund-policy-v3.pdf</span>
+        </div>
+        <div class="bubble bubble-user">Has that changed since last quarter?</div>
+        <div class="chat-mock-typing"><span></span><span></span><span></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PROOF STRIP ============ -->
+<section class="proof" id="proof">
+  <div class="container proof-grid">
+    <div class="proof-text">
+      <span class="eyebrow">// Built for how teams actually work</span>
+      <h2>Less time spent hunting for the right file. More time deciding.</h2>
+      <p>Every company gets its own workspace, with teams underneath it that each keep their own documents and their own chat history — while still being able to draw on company-wide knowledge when they need it.</p>
+    </div>
+    <div class="proof-images">
+      <img class="tall" src="images/hero-analytics.jpg" alt="A team reviewing reports and dashboards together at a table" />
+      <img src="images/team-collab.jpg" alt="Colleagues discussing a project around a laptop" />
+    </div>
+  </div>
+</section>
+
+<!-- ============ FEATURES ============ -->
+<section class="section section-alt" id="features">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">// Features</span>
+      <h2>Everything a company needs to turn documents into answers</h2>
+      <p>One workspace per company, unlimited teams underneath it, and a chat interface that always cites where its answer came from.</p>
+    </div>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 5a2 2 0 012-2h4l2 2h4a2 2 0 012 2v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5z" stroke="currentColor" stroke-width="1.5"/></svg></div>
+        <h3>Company &amp; team workspaces</h3>
+        <p>Register your company once, then create as many teams as you need — each with its own login, its own documents, and its own chat history.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 3h7l3 3v11a1 1 0 01-1 1H5a1 1 0 01-1-1V4a1 1 0 011-1z" stroke="currentColor" stroke-width="1.5"/><path d="M7 10h6M7 13h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+        <h3>A private knowledge base</h3>
+        <p>Upload documents at the company level or inside a specific team. Everything is versioned, replaceable, and easy to find by name.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 5a2 2 0 012-2h10a2 2 0 012 2v7a2 2 0 01-2 2H8l-4 3v-3H5a2 2 0 01-2-2V5z" stroke="currentColor" stroke-width="1.5"/></svg></div>
+        <h3>Context-aware chat</h3>
+        <p>Ask questions in plain language and get answers grounded in your own uploaded documents — with sessions you can revisit any time.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="4" y="8" width="12" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M7 8V6a3 3 0 016 0v2" stroke="currentColor" stroke-width="1.5"/></svg></div>
+        <h3>Session-based security</h3>
+        <p>Team access always requires an active company session underneath it — so a team can never be reached independently of the company that owns it.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2l1.8 4.6L16 8l-4.2 1.6L10 14l-1.8-4.4L4 8l4.2-1.4L10 2z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></div>
+        <h3>One dashboard, full visibility</h3>
+        <p>See total teams, total documents, and recent activity at a glance the moment you log in — no digging required.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 10a6 6 0 1112 0 6 6 0 01-12 0z" stroke="currentColor" stroke-width="1.5"/><path d="M10 7v3l2 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+        <h3>Built to scale with you</h3>
+        <p>Add teams as your company grows. Each one gets the same document + chat tooling, scoped to exactly what it owns.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ HOW IT WORKS ============ -->
+<section class="section" id="how-it-works">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">// How it works</span>
+      <h2>From sign-up to your first answered question</h2>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <h4>Register your company</h4>
+        <p>Create a company workspace with a name, email, and password.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <h4>Create your teams</h4>
+        <p>Spin up teams from your company dashboard, each with its own login.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <h4>Upload your documents</h4>
+        <p>Add files at the company level, or inside a specific team's workspace.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">04</div>
+        <h4>Start asking questions</h4>
+        <p>Chat with your knowledge base and pick up past conversations any time.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CTA ============ -->
+<section class="section section-alt">
+  <div class="container">
+    <div class="cta-band">
+      <div class="cta-band-text">
+        <h2>Give your team a faster way to find answers.</h2>
+        <p>Set up your company workspace in under two minutes.</p>
+      </div>
+      <div class="cta-band-actions">
+        <button class="btn btn-primary" id="ctaSignup">Create your workspace</button>
+        <button class="btn btn-ghost-invert" id="ctaLogin">Log in</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-top">
+      <div>
+        <div class="brand"><span class="brand-mark"></span> IntelDocs AI</div>
+        <p>A private knowledge base and chat layer for companies and their teams.</p>
+      </div>
+      <div class="footer-links">
+        <div class="footer-col">
+          <h5>Product</h5>
+          <a href="#features">Features</a>
+          <a href="#how-it-works">How it works</a>
+        </div>
+        <div class="footer-col">
+          <h5>Account</h5>
+          <a href="#" id="footerLogin">Log in</a>
+          <a href="#" id="footerSignup">Sign up</a>
+        </div>
+        <div class="footer-col">
+          <h5>Note</h5>
+          <a href="company-dashboard.html">Team members log in from the company dashboard</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 IntelDocs AI. Internal tool.</span>
+      <span>Built with FastAPI + vanilla JS</span>
+    </div>
+  </div>
+</footer>
+
+<!-- ============ AUTH MODAL ============ -->
+<div class="modal-overlay" id="authOverlay">
+  <div class="modal">
+    <button class="modal-close" id="authClose" aria-label="Close">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 2l12 12M14 2L2 14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </button>
+
+    <div class="tab-switch">
+      <button id="tabLogin" class="active">Log in</button>
+      <button id="tabSignup">Sign up</button>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <div id="loginPane">
+      <h2>Welcome back</h2>
+      <p class="modal-sub">Log in to your company workspace.</p>
+      <div class="form-msg" id="loginMsg"></div>
+      <form id="loginForm">
+        <div class="field">
+          <label for="loginName">Company name</label>
+          <input type="text" id="loginName" required autocomplete="organization" />
+        </div>
+        <div class="field">
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" required autocomplete="current-password" />
+        </div>
+        <button type="submit" class="btn btn-primary btn-block" id="loginSubmit">Log in</button>
+      </form>
+      <p class="form-foot">New here? <button id="toSignup">Create a company account</button></p>
+    </div>
+
+    <!-- SIGNUP FORM -->
+    <div id="signupPane" style="display:none">
+      <h2>Create your workspace</h2>
+      <p class="modal-sub">Set up a company account to get started.</p>
+      <div class="form-msg" id="signupMsg"></div>
+      <form id="signupForm">
+        <div class="field">
+          <label for="signupName">Company name</label>
+          <input type="text" id="signupName" required autocomplete="organization" />
+        </div>
+        <div class="field">
+          <label for="signupEmail">Work email</label>
+          <input type="email" id="signupEmail" required autocomplete="email" />
+        </div>
+        <div class="field">
+          <label for="signupPassword">Password</label>
+          <input type="password" id="signupPassword" required autocomplete="new-password" />
+        </div>
+        <button type="submit" class="btn btn-primary btn-block" id="signupSubmit">Create account</button>
+      </form>
+      <p class="form-foot">Already registered? <button id="toLogin">Log in instead</button></p>
+    </div>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+</body>
+</html>

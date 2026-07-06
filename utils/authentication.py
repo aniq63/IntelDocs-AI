@@ -107,6 +107,21 @@ async def get_current_company_from_query(
 
     return company
 
+async def get_current_company_header2(
+    company_session_token: Optional[str] = Header(None, alias="company-session-token"),
+    db: AsyncSession = Depends(get_db)
+) -> Company:
+
+    if not company_session_token:
+        raise HTTPException(status_code=401, detail="Company session token is missing")
+
+    result = await db.execute(
+        select(Company).where(Company.session_token == company_session_token)
+    )
+    company = result.scalar_one_or_none()
+    if not company:
+        raise HTTPException(status_code=401, detail="Invalid or expired company session token")
+    return company
 
 # =============================================================================
 # TEAM AUTHENTICATION
@@ -190,26 +205,9 @@ from utils.authentication import get_current_company, get_current_team
 
 
 async def get_verified_team(
-    current_team: models.Team = Depends(get_current_team),
-    current_company: models.Company = Depends(get_current_company),
-) -> models.Team:
-    """
-    Use this instead of get_current_team on any route that should
-    require BOTH:
-      1. A valid team session token, AND
-      2. A valid company session token for the company that team
-         belongs to.
-
-    This closes the gap where a team session token alone (without the
-    owning company also being logged in) could still call team
-    endpoints, and where a team token could theoretically be paired
-    with an unrelated company's session.
-    """
-
+    current_team: Team = Depends(get_current_team),                 
+    current_company: Company = Depends(get_current_company_header2),
+) -> Team:
     if current_team.company_id != current_company.id:
-        raise HTTPException(
-            status_code=403,
-            detail="This team does not belong to the authenticated company.",
-        )
-
+        raise HTTPException(status_code=403, detail="This team does not belong to the authenticated company.")
     return current_team
