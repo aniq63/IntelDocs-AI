@@ -131,10 +131,5 @@ IntelDocs-AI/
 - **Strictly Asynchronous**: From database transactions (`asyncpg`) to blocking embedding calls (`asyncio.to_thread`), the API guarantees non-blocking execution.
 - **Zero Cold-Start Latency**: The `sentence-transformers` embedding model is pre-loaded during the FastAPI lifespan hook to ensure immediate availability for the first request.
 
-## Future Roadmap
-- [ ] **Background Queues**: Celery integration for handling massive document uploads asynchronously.
-- [ ] **Hybrid Search**: Combining sparse keyword matching (`tsvector`) with dense vector embeddings (`pgvector`).
-- [ ] **Model Agnosticism**: Expanded support for local LLMs and alternative commercial APIs (OpenAI, Anthropic).
-
 ## License
 This project is licensed under the [MIT License](LICENSE) - Copyright (c) 2026 Muhammad Aniq Ramzan
