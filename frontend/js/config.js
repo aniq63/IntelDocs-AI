@@ -2,11 +2,24 @@
  * ============================================================
  * IntelDocs AI — Frontend configuration
  * ============================================================
- * Change API_BASE_URL to point at your running FastAPI backend.
- * During local dev with `uvicorn main:app --reload` this is
- * usually http://127.0.0.1:8000 — update it once you deploy.
+ * API_BASE_URL points at the deployed FastAPI backend.
+ *   - Deployed backend (AWS EC2):  http://13.229.201.131:8000
+ *   - Local dev with `uvicorn main:app --reload`: http://127.0.0.1:8000
+ *
+ * The value is resolved in this order:
+ *   1. A `window.INTELDOCS_API_BASE` global (can be injected by your
+ *      deploy step / edge function before this script runs).
+ *   2. The Vercel Framework-agnostic environment variable below when
+ *      running behind a small serverless/edge rewrite (optional).
+ *   3. The API_DEFAULT fallback constant (hardcoded deployment URL).
+ * Simply edit API_DEFAULT to point at your current environment.
  */
-const API_BASE_URL = "http://127.0.0.1:8000";
+const API_DEFAULT = "http://13.229.201.131:8000";
+
+const API_BASE_URL =
+  (typeof window !== "undefined" &&
+    window.INTELDOCS_API_BASE) ||
+  API_DEFAULT;
 
 /**
  * ------------------------------------------------------------

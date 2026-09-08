@@ -28,7 +28,7 @@ class MyException(Exception):
     """
     Custom exception class for handling errors in the US visa application.
     """
-    def __init__(self, error_message: str, error_detail: sys):
+    def __init__(self, error_message: str, error_detail: sys = None):
         """
         Initializes the USvisaException with a detailed error message.
 
@@ -38,8 +38,13 @@ class MyException(Exception):
         # Call the base class constructor with the error message
         super().__init__(error_message)
 
-        # Format the detailed error message using the error_message_detail function
-        self.error_message = error_message_detail(error_message, error_detail)
+        if error_detail is None:
+            # No traceback context was supplied (e.g. a validation
+            # helper raising directly) - just use the plain message.
+            self.error_message = str(error_message)
+        else:
+            # Format the detailed error message using the error_message_detail function
+            self.error_message = error_message_detail(error_message, error_detail)
 
     def __str__(self) -> str:
         """

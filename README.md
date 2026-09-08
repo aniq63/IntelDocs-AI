@@ -38,6 +38,7 @@ Built on a modern, asynchronous Python backend, IntelDocs AI is tailored for hig
 | **Document Processing** | `pypdf`, `unstructured`, `tiktoken` |
 | **Frontend** | Vanilla HTML, CSS, JavaScript (Lightweight Dashboards) |
 | **Security** | `bcrypt` |
+| **Deployment** | Backend: Docker + AWS EC2 · Frontend: Vercel (static) |
 
 ## Quick Start
 
@@ -92,6 +93,51 @@ Database tables are automatically created on startup via SQLAlchemy's lifecycle 
 uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
+---
+
+## Deployment
+
+The project ships with two independently deployable parts: a **FastAPI backend**
+(containerized with Docker) and a **static frontend** (deployable to Vercel).
+
+### Backend — Docker + AWS EC2
+
+The included `Dockerfile` builds a minimal CPU-only image (PyTorch CPU wheel to
+keep the image small). Deploy it on an EC2 instance:
+
+```bash
+# On the EC2 instance
+docker build -t inteldocs-ai .
+docker run -d --name inteldocs-ai \
+  -p 8000:8000 \
+  --env-file .env \
+  inteldocs-ai
+```
+
+The app listens on port `8000`. Ensure your EC2 **security group** allows inbound
+traffic on port `8000` (and that CORS is configured — it already allows `*`).
+
+Example deployed backend URL used throughout this project:
+`http://13.229.201.131:8000`
+
+### Frontend — Vercel
+
+The frontend is plain static HTML/CSS/JS located in `frontend/`. To deploy it to
+Vercel as a static site:
+
+1. Set the project **Root Directory** to `frontend` (or use the provided
+   `vercel.json`, which sets `public` to `frontend`).
+2. The bundled `vercel.json` configures static serving and the homepage rewrite.
+3. Point the frontend at your backend by setting `API_BASE_URL` in
+   `frontend/js/config.js` to your deployed backend URL
+   (e.g. `http://13.229.201.131:8000`).
+
+The API base URL in `frontend/js/config.js` resolves in this order:
+1. A global `window.INTELDOCS_API_BASE` (if injected before `config.js` loads).
+2. The `API_DEFAULT` fallback constant (hardcoded to the deployed backend).
+
+---
+
 ## Usage Examples
 
 ### Uploading a Document (Team Scope)
@@ -115,7 +161,7 @@ curl -X POST "http://localhost:8000/chat/team/ask" \
 IntelDocs-AI/
 ├── config/              # Application & RAG tuning settings
 ├── database/            # SQLAlchemy models, async setup, and schema logic
-├── frontend/            # Vanilla HTML/JS/CSS client dashboards
+├── frontend/            # Vanilla HTML/JS/CSS client dashboards (Vercel)
 ├── services/
 │   ├── pipeline/        # High-level orchestration (chat execution, ingestion)
 │   ├── prompts/         # LangChain prompt templates
@@ -123,6 +169,8 @@ IntelDocs-AI/
 │   └── routes/          # FastAPI REST endpoints
 ├── utils/               # Exceptions, logging, auth middleware
 ├── main.py              # Application entry point & lifespan management
+├── Dockerfile           # Backend image (FastAPI on AWS EC2)
+├── vercel.json          # Frontend static-hosting config (Vercel)
 └── requirements.txt     # Python dependencies
 ```
 

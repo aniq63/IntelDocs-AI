@@ -1,50 +1,152 @@
-name: Publish Docker Image
+name: IntelDocs CI/CD
 
 on:
   push:
+    branches:
+      - main
+  workflow_dispatch:
 
 permissions:
   contents: read
   packages: write
 
+concurrency:
+  group: inteldocs-deploy
+  cancel-in-progress: false
+
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: ${{ github.repository_owner }}/inteldocs-ai
 
 jobs:
-  publish:
+  test:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Check out repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          python-version: "3.11"
 
-      - name: Extract Docker metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=sha
-            type=raw,value=latest,enable={{is_default_branch}}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run tests
+        run: |
+          python -m pytest tests/ -v
+
+  build-and-push:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.build.outputs.image }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v6
+      - name: Login to GHCR
+        uses: docker/login-action@v3
         with:
-          context: .
-          file: ./Dockerfile
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        id: build
+        env:
+          IMAGE: ghcr.io/${{ github.repository_owner }}/inteldocs-ai
+          SHA_TAG: sha-${{ github.sha }}
+        run: |
+          docker buildx build \
+            --platform linux/amd64 \
+            --file Dockerfile \
+            --tag "$IMAGE:$SHA_TAG" \
+            --tag "$IMAGE:latest" \
+            --push \
+            .
+          
+          # Pass the exact image name to the deploy job.
+          echo "image=$IMAGE:$SHA_TAG" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to EC2
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USERNAME: ${{ secrets.EC2_USERNAME }}
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+          GHCR_PAT: ${{ secrets.GITHUB_TOKEN }}
+          REPO_OWNER: ${{ github.repository_owner }}
+        run: |
+          IMAGE="ghcr.io/${{ github.repository_owner }}/inteldocs-ai:sha-${GITHUB_SHA}"
+
+          # Setup SSH
+          mkdir -p ~/.ssh
+          echo "$EC2_SSH_KEY" > ~/.ssh/ec2_key
+          chmod 600 ~/.ssh/ec2_key
+          ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts
+
+          # Connect to EC2 and run deployment script
+          ssh \
+            -i ~/.ssh/ec2_key \
+            -o ServerAliveInterval=15 \
+            -o ServerAliveCountMax=10 \
+            "$EC2_USERNAME@$EC2_HOST" \
+            "IMAGE='$IMAGE' GHCR_PAT='$GHCR_PAT' REPO_OWNER='$REPO_OWNER' bash -s" << 'REMOTE_SCRIPT'
+            
+            set -e
+
+            echo "Logging into GitHub Container Registry..."
+            echo "$GHCR_PAT" | docker login ghcr.io -u "$REPO_OWNER" --password-stdin
+
+            echo "Stopping and removing old container..."
+            docker stop inteldocs-backend || true
+            docker rm inteldocs-backend || true
+
+            echo "Pruning unused Docker images and build cache to free space..."
+            docker system prune -a -f --volumes || true
+
+            echo "Pulling new Docker image..."
+            docker pull "$IMAGE"
+
+            echo "Starting new container..."
+            docker run -d \
+              --name inteldocs-backend \
+              --restart unless-stopped \
+              --env-file ~/intel_docs/.env \
+              -p 8000:8000 \
+              "$IMAGE"
+
+            echo "Waiting for application to boot..."
+            HEALTHY=false
+            for i in {1..15}; do
+              # Pinging the root endpoint defined in your main.py
+              if curl -fs http://localhost:8000/ > /tmp/health.json; then
+                echo "Health check passed!"
+                HEALTHY=true
+                break
+              fi
+              echo "Waiting... ($i/15)"
+              sleep 5
+            done
+
+            if [ "$HEALTHY" != "true" ]; then
+              echo "DEPLOYMENT FAILED"
+              docker logs --tail 50 inteldocs-backend
+              exit 1
+            fi
+
+            echo "DEPLOYMENT SUCCESSFUL - IntelDocs AI is running."
+          REMOTE_SCRIPT
