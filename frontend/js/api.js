@@ -89,6 +89,43 @@ async function request(path, { method = "GET", body, withTeam = false, isForm = 
   return data;
 }
 
+async function streamRequest(path, { body, withTeam = false, onToken } = {}) {
+  const res = await fetch(`${API_BASE_URL}${path}`, {
+    method: "POST",
+    headers: { ...authHeaders({ withTeam }), "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    let detail = text;
+    try { detail = JSON.parse(text).detail || text; } catch {}
+    throw new ApiError(typeof detail === "string" ? detail : JSON.stringify(detail), res.status);
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let result = null;
+
+  while (true) {
+    const { value, done } = await reader.read();
+    buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
+    const events = buffer.split("\n\n");
+    buffer = events.pop();
+    for (const event of events) {
+      const line = event.split("\n").find((part) => part.startsWith("data: "));
+      if (!line) continue;
+      const data = JSON.parse(line.slice(6));
+      if (data.type === "token") onToken(data.text);
+      if (data.type === "done") result = data.result;
+      if (data.type === "error") throw new ApiError(data.message, 500);
+    }
+    if (done) break;
+  }
+  return result;
+}
+
 /** Reads the first present key from a list of candidate field names,
  *  since exact schema field names weren't provided — keeps the UI
  *  working across small schema differences. */
@@ -143,12 +180,14 @@ const Api = {
 
   // ---------------- Chat (Company) ----------------
   companyChatAsk: (question, sessionId) => request("/chat/company/ask", { method: "POST", body: { question, session_id: sessionId ?? null } }),
+  companyChatAskStream: (question, sessionId, onToken) => streamRequest("/chat/company/ask/stream", { body: { question, session_id: sessionId ?? null }, onToken }),
   companyChatSessions: () => request("/chat/company/sessions"),
   companyChatMessages: (sessionId) => request(`/chat/company/sessions/${sessionId}/messages`),
   companyChatDeleteSession: (sessionId) => request(`/chat/company/sessions/${sessionId}`, { method: "DELETE" }),
 
   // ---------------- Chat (Team) ----------------
   teamChatAsk: (question, sessionId) => request("/chat/team/ask", { method: "POST", body: { question, session_id: sessionId ?? null }, withTeam: true }),
+  teamChatAskStream: (question, sessionId, onToken) => streamRequest("/chat/team/ask/stream", { body: { question, session_id: sessionId ?? null }, withTeam: true, onToken }),
   teamChatSessions: () => request("/chat/team/sessions", { withTeam: true }),
   teamChatMessages: (sessionId) => request(`/chat/team/sessions/${sessionId}/messages`, { withTeam: true }),
   teamChatDeleteSession: (sessionId) => request(`/chat/team/sessions/${sessionId}`, { method: "DELETE", withTeam: true }),

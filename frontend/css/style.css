@@ -322,14 +322,16 @@ ul { list-style: none; margin: 0; padding: 0; }
   gap: 40px;
   align-items: center;
 }
-.proof-images { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.proof-images { display: block; }
 .proof-images img {
+  display: block;
+  width: 100%;
   border-radius: var(--radius-md);
-  height: 100%;
+  aspect-ratio: 3 / 1;
+  height: auto;
   object-fit: cover;
   box-shadow: var(--shadow-2);
 }
-.proof-images .tall { grid-row: span 2; height: 100%; }
 .proof-text .eyebrow { color: var(--signal-dim); }
 .proof-text h2 {
   font-family: var(--font-display);

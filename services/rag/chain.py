@@ -112,3 +112,29 @@ class RagChain:
         except Exception as e:
             logging.exception("RagChain failed.")
             raise MyException(e)
+
+    async def stream(self, question: str):
+        if not question or not question.strip():
+            raise MyException(ValueError("Question must not be empty."))
+
+        try:
+            logging.info("[rag_chain] starting stream")
+
+            rag_chain = (
+                {
+                    "context": RunnableLambda(self.get_context),
+                    "question": RunnablePassthrough(),
+                    "scope": lambda _: self.scope,
+                }
+                | self.prompt
+                | self.llm
+                | StrOutputParser()
+            )
+
+            async for token in rag_chain.astream(question):
+                yield token
+
+            logging.info("[rag_chain] completed stream")
+        except Exception as e:
+            logging.exception("RagChain streaming failed.")
+            raise MyException(e)

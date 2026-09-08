@@ -57,7 +57,7 @@ class RAGConfig:
     contextual_chunking: bool = False
 
     # Groq model used to generate context notes
-    contextual_model: str = "llama-3.1-8b-instant"
+    contextual_model: str = "openai/gpt-oss-20b"
 
     # Max characters of the source document sent as reference context
     # to the LLM (keeps prompts small/cheap even for very long files)
@@ -67,7 +67,7 @@ class RAGConfig:
     contextual_max_workers: int = 5
 
     ## LLM Model
-    llm_model = "llama-3.1-8b-instant"
+    llm_model = "openai/gpt-oss-20b"
 
     # CHAT 
     TITLE_MAX_LENGTH = 80

@@ -193,18 +193,20 @@
     const box = document.getElementById("chatMessages");
     if (box.querySelector(".empty-state")) box.innerHTML = "";
     box.innerHTML += `<div class="chat-bubble user">${escapeHtml(question)}</div>`;
-    box.innerHTML += `<div class="chat-bubble ai" id="pendingBubble"><span class="spinner"></span></div>`;
+    const pending = document.createElement("div");
+    pending.className = "chat-bubble ai";
+    pending.innerHTML = `<span class="spinner"></span>`;
+    box.appendChild(pending);
     box.scrollTop = box.scrollHeight;
 
     try {
-      const res = await Api.teamChatAsk(question, currentSessionId);
+      const res = await Api.teamChatAskStream(question, currentSessionId, (token) => {
+        pending.textContent += token;
+        box.scrollTop = box.scrollHeight;
+      });
       currentSessionId = Api.pick(res, ["session_id"], currentSessionId);
-      const answer = Api.pick(res, ["answer", "response", "message"], "(no answer returned)");
-      const pending = document.getElementById("pendingBubble");
-      if (pending) pending.textContent = answer;
       loadSessions();
     } catch (err) {
-      const pending = document.getElementById("pendingBubble");
       if (pending) { pending.textContent = err.message; pending.style.color = "#c8392f"; }
     }
     box.scrollTop = box.scrollHeight;

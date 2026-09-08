@@ -1,4 +1,5 @@
-from typing import List, Optional
+import json
+from typing import AsyncIterator, List, Optional
 
 from fastapi import HTTPException
 from sqlalchemy import select
@@ -186,3 +187,68 @@ async def ask_and_store(
         "question": question,
         "answer": answer,
     }
+
+
+async def stream_and_store(
+    db: AsyncSession,
+    *,
+    company_id: int,
+    company_name: str,
+    visibility: str,
+    question: str,
+    team_id: Optional[int] = None,
+    team_name: Optional[str] = None,
+    session_id: Optional[int] = None,
+    top_k: int = 6,
+    min_similarity: float = 0.15,
+) -> AsyncIterator[str]:
+    """Stream answer tokens as SSE events, then persist the completed turn."""
+    try:
+        session = await _get_or_create_session(
+            db,
+            company_id=company_id,
+            team_id=team_id,
+            visibility=visibility,
+            session_id=session_id,
+            title_hint=question,
+        )
+
+        chain = RagChain(
+            db=db,
+            company_id=company_id,
+            company_name=company_name,
+            team_id=team_id,
+            team_name=team_name,
+            top_k=top_k,
+            min_similarity=min_similarity,
+        )
+
+        answer_parts = []
+        async for token in chain.stream(question):
+            text = token if isinstance(token, str) else str(token)
+            answer_parts.append(text)
+            yield f"data: {json.dumps({'type': 'token', 'text': text})}\n\n"
+
+        answer = "".join(answer_parts)
+        message = models.ChatMessage(
+            session_id=session.id,
+            company_id=company_id,
+            team_id=team_id,
+            question=question,
+            answer=answer,
+        )
+        db.add(message)
+        await db.commit()
+        await db.refresh(message)
+
+        logging.info(f"[chat] saved message id={message.id} session_id={session.id}")
+        result = {
+            "session_id": session.id,
+            "message_id": message.id,
+            "question": question,
+            "answer": answer,
+        }
+        yield f"data: {json.dumps({'type': 'done', 'result': result})}\n\n"
+    except Exception as error:
+        logging.exception("Streaming chat failed.")
+        yield f"data: {json.dumps({'type': 'error', 'message': str(error)})}\n\n"

@@ -1,4 +1,5 @@
 langchain
+langchain-community
 langchain-core
 langchain-text-splitters
 langchain_experimental
@@ -22,4 +23,6 @@ requests
 pyyaml
 pgvector
 langchain-classic
-tiktoken 
+tiktoken
+docx2txt
+unstructured[docx,pptx,xlsx]

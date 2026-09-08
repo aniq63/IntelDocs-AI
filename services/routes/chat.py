@@ -1,6 +1,7 @@
 from typing import List
 
 from fastapi import APIRouter, Depends
+from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.connection import get_db
@@ -32,6 +33,26 @@ async def ask_company(
         visibility="company",
         question=payload.question,
         session_id=payload.session_id,
+    )
+
+
+@router.post("/company/ask/stream")
+async def stream_company(
+    payload: schemas.ChatAskRequest,
+    current_company: models.Company = Depends(get_current_company),
+    db: AsyncSession = Depends(get_db),
+):
+    return StreamingResponse(
+        chat_service.stream_and_store(
+            db,
+            company_id=current_company.id,
+            company_name=current_company.name,
+            visibility="company",
+            question=payload.question,
+            session_id=payload.session_id,
+        ),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
 
 
@@ -107,6 +128,29 @@ async def ask_team(
         team_id=current_team.id,
         team_name=current_team.name,
         session_id=payload.session_id,
+    )
+
+
+@router.post("/team/ask/stream")
+async def stream_team(
+    payload: schemas.ChatAskRequest,
+    current_team: models.Team = Depends(get_verified_team),
+    current_company: models.Company = Depends(get_current_company),
+    db: AsyncSession = Depends(get_db),
+):
+    return StreamingResponse(
+        chat_service.stream_and_store(
+            db,
+            company_id=current_team.company_id,
+            company_name=current_company.name,
+            visibility="team",
+            question=payload.question,
+            team_id=current_team.id,
+            team_name=current_team.name,
+            session_id=payload.session_id,
+        ),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
 
 
