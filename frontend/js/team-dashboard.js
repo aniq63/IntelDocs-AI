@@ -43,18 +43,22 @@
   const links = document.querySelectorAll("[data-view]");
   function goToView(name) {
     views.forEach((v) => v.classList.toggle("active", v.id === `view-${name}`));
-    document.querySelectorAll(".sidebar-link").forEach((l) => l.classList.toggle("active", l.dataset.view === name));
+    document.querySelectorAll(".sidebar-link, .mobile-nav-link").forEach((l) => l.classList.toggle("active", l.dataset.view === name));
     if (name === "documents") loadDocs();
     if (name === "chat") loadSessions();
   }
   links.forEach((l) => l.addEventListener("click", () => goToView(l.dataset.view)));
 
   // ---------------- Logout (team only) ----------------
-  document.getElementById("logoutBtn").addEventListener("click", async () => {
+  const logoutHandlers = async () => {
     try { await Api.teamLogout(); } catch (e) { /* proceed regardless */ }
     Session.clearTeam();
     window.location.href = "company-dashboard.html";
-  });
+  };
+
+  document.getElementById("logoutBtn").addEventListener("click", logoutHandlers);
+  const mobileLogoutBtn = document.getElementById("mobileLogoutBtn");
+  if (mobileLogoutBtn) mobileLogoutBtn.addEventListener("click", logoutHandlers);
 
   // ---------------- Overview ----------------
   async function loadOverview() {
