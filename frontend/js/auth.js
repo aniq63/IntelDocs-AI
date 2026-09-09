@@ -100,14 +100,21 @@
     }
   });
 
-  // Mobile nav toggle (simple: reveal links as a stacked menu)
+  // Mobile nav toggle
   const navToggle = document.getElementById("navToggle");
-  if (navToggle) {
+  const navLinks = document.querySelector(".nav-links");
+
+  if (navToggle && navLinks) {
     navToggle.addEventListener("click", () => {
-      const links = document.querySelector(".nav-links");
-      const open = links.style.display === "flex";
-      links.style.display = open ? "none" : "flex";
-      links.style.cssText += open ? "" : "position:absolute; top:72px; left:0; right:0; background:#222831; flex-direction:column; padding:20px 32px; gap:18px;";
+      const isOpen = navLinks.classList.toggle("mobile-open");
+      navToggle.setAttribute("aria-expanded", String(isOpen));
+    });
+
+    navLinks.querySelectorAll("a").forEach((link) => {
+      link.addEventListener("click", () => {
+        navLinks.classList.remove("mobile-open");
+        navToggle.setAttribute("aria-expanded", "false");
+      });
     });
   }
 })();

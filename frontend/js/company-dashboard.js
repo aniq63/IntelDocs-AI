@@ -9,6 +9,30 @@
   document.getElementById("companyInitial").textContent = (companyName[0] || "C").toUpperCase();
   document.getElementById("statCompanyName").textContent = companyName;
 
+  const sidebar = document.getElementById("sidebar");
+  const mobileSidebarToggle = document.getElementById("mobileSidebarToggle");
+
+  if (mobileSidebarToggle) {
+    mobileSidebarToggle.addEventListener("click", () => {
+      sidebar.classList.toggle("open");
+    });
+  }
+
+  document.querySelectorAll(".sidebar-link").forEach((link) => {
+    link.addEventListener("click", () => {
+      if (window.innerWidth <= 960) sidebar.classList.remove("open");
+    });
+  });
+
+  document.addEventListener("click", (event) => {
+    if (window.innerWidth > 960) return;
+    const clickedInsideSidebar = sidebar.contains(event.target);
+    const clickedToggle = mobileSidebarToggle && mobileSidebarToggle.contains(event.target);
+    if (!clickedInsideSidebar && !clickedToggle && sidebar.classList.contains("open")) {
+      sidebar.classList.remove("open");
+    }
+  });
+
   // ---------------- View switching ----------------
   const views = document.querySelectorAll(".view");
   const links = document.querySelectorAll("[data-view]");

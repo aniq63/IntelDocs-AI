@@ -13,7 +13,7 @@
 
 ## Overview
 
-**IntelDocs AI** is a highly scalable, AI-powered enterprise knowledge platform. It enables companies to securely organize documents, repositories, and codebases by team. Through advanced **Retrieval-Augmented Generation (RAG)**, employees can chat with their team's specific knowledge base, while administrators monitor teams, documents, metadata, and analytics from a centralized dashboard.
+**IntelDocs AI** is a highly scalable, AI-powered enterprise knowledge platform. It enables companies to securely organize documents by team. Through advanced **Retrieval-Augmented Generation (RAG)**, employees can chat with their team's specific knowledge base, while administrators monitor teams, documents, metadata, and analytics from a centralized dashboard.
 
 ## Key Features
 
