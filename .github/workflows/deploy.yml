@@ -89,6 +89,7 @@ jobs:
           EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
           GHCR_PAT: ${{ secrets.GITHUB_TOKEN }}
           REPO_OWNER: ${{ github.repository_owner }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
           IMAGE="ghcr.io/${{ github.repository_owner }}/inteldocs-ai:sha-${GITHUB_SHA}"
 
