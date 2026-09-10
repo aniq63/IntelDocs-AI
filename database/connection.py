@@ -15,32 +15,61 @@ from utils.settings import get_settings
 settings = get_settings()
 
 
+def normalize_database_url(database_url: str) -> str:
+    """
+    Normalize PostgreSQL URLs for SQLAlchemy + asyncpg.
+
+    - Convert plain postgres/postgresql URLs to asynchronous asyncpg URLs.
+    - Convert psycopg URLs to asyncpg URLs.
+    - For Supabase pooler endpoints, force the pgbouncer-compatible settings
+      that the pooler expects (SSL and transaction-pooler defaults).
+    """
+
+    database_url = database_url.strip()
+
+    # Normalize PostgreSQL URLs for async SQLAlchemy.
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace(
+            "postgres://",
+            "postgresql+asyncpg://",
+            1,
+        )
+
+    elif database_url.startswith("postgresql://"):
+        database_url = database_url.replace(
+            "postgresql://",
+            "postgresql+asyncpg://",
+            1,
+        )
+
+    elif "+psycopg" in database_url and "+asyncpg" not in database_url:
+        database_url = database_url.replace(
+            "+psycopg",
+            "+asyncpg",
+        )
+
+    url_obj = make_url(database_url)
+
+    # Supabase pooler endpoints require SSL and pgbouncer-compatible settings.
+    if url_obj.host and ".pooler.supabase.com" in url_obj.host:
+        query = dict(url_obj.query)
+        query["sslmode"] = "require"
+        query["pgbouncer"] = "true"
+
+        # Supabase's transaction pooler generally uses port 6543.
+        if url_obj.port in (None, 5432):
+            url_obj = url_obj._replace(port=6543)
+
+        url_obj = url_obj._replace(query=query)
+
+    return str(url_obj)
+
+
 # ---------------------------------------------------------------------------
 # Database URL
 # ---------------------------------------------------------------------------
 
-database_url = settings.database_url.strip()
-
-# Normalize PostgreSQL URLs for async SQLAlchemy.
-if database_url.startswith("postgres://"):
-    database_url = database_url.replace(
-        "postgres://",
-        "postgresql+asyncpg://",
-        1,
-    )
-
-elif database_url.startswith("postgresql://"):
-    database_url = database_url.replace(
-        "postgresql://",
-        "postgresql+asyncpg://",
-        1,
-    )
-
-elif "+psycopg" in database_url and "+asyncpg" not in database_url:
-    database_url = database_url.replace(
-        "+psycopg",
-        "+asyncpg",
-    )
+database_url = normalize_database_url(settings.database_url)
 
 
 # ---------------------------------------------------------------------------

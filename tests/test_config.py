@@ -1,6 +1,8 @@
 import pytest
+from sqlalchemy.engine.url import make_url
 
 from config.settings import RAGConfig, Settings
+from database.connection import normalize_database_url
 
 
 class TestRAGConfig:
@@ -51,3 +53,19 @@ class TestSettings:
     def test_llm_model_on_rag_config(self):
         cfg = RAGConfig()
         assert cfg.llm_model == "openai/gpt-oss-20b"
+
+
+def test_supabase_pooler_url_is_normalized_for_asyncpg():
+    original = (
+        "postgresql+psycopg://postgres.qgmrtjxffiwuiyoysbbx:"
+        "password@aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres"
+    )
+
+    normalized = normalize_database_url(original)
+    url = make_url(normalized)
+
+    assert url.drivername == "postgresql+asyncpg"
+    assert url.host == "aws-1-ap-northeast-2.pooler.supabase.com"
+    assert url.port == 6543
+    assert url.query["sslmode"] == "require"
+    assert url.query["pgbouncer"] == "true"
