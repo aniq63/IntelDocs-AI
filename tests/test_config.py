@@ -68,4 +68,4 @@ def test_supabase_pooler_url_is_normalized_for_asyncpg():
     assert url.host == "aws-1-ap-northeast-2.pooler.supabase.com"
     assert url.port == 6543
     assert url.query["sslmode"] == "require"
-    assert url.query["pgbouncer"] == "true"
+    assert "pgbouncer" not in url.query

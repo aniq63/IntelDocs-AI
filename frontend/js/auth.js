@@ -83,6 +83,11 @@
     const email = document.getElementById("signupEmail").value.trim();
     const password = document.getElementById("signupPassword").value;
 
+    if (password.length <= 6) {
+      showFormMsg(msg, "Password should be more than 6 characters long.", "error");
+      return;
+    }
+
     btn.disabled = true;
     btn.innerHTML = `<span class="spinner"></span> Creating…`;
     try {

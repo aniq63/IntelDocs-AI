@@ -14,7 +14,7 @@
  *   3. The API_DEFAULT fallback constant (hardcoded deployment URL).
  * Simply edit API_DEFAULT to point at your current environment.
  */
-const API_DEFAULT = "/api";
+const API_DEFAULT = "http://127.0.0.1:8000";
 
 const API_BASE_URL =
   (typeof window !== "undefined" &&

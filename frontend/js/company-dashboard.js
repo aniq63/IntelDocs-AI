@@ -169,6 +169,18 @@
     const description = document.getElementById("teamDescription").value.trim();
     const password = document.getElementById("teamPassword").value;
 
+    if (teamModalMode === "create" && password.length <= 6) {
+      msg.textContent = "Password should be more than 6 characters long.";
+      msg.className = "form-msg error";
+      return;
+    }
+
+    if (teamModalMode !== "create" && password && password.length <= 6) {
+      msg.textContent = "Password should be more than 6 characters long.";
+      msg.className = "form-msg error";
+      return;
+    }
+
     btn.disabled = true;
     const originalLabel = btn.textContent;
     btn.innerHTML = `<span class="spinner"></span> Saving…`;
